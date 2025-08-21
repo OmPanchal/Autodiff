@@ -1,0 +1,20 @@
+from autodiff.nodes.Node import Node
+
+
+class Const(Node):
+	count = 0
+
+	def __init__(self, value, name=None):
+		self.name = name or self.set_name(Const, name)
+		Const.count += 1
+		super().__init__(value, name)
+
+	def __repr__(self):
+		return f"Const name={self.name} value={self.value}"
+	
+	def string(self):
+		return f"{self.value}"
+	
+	@staticmethod
+	def reset_count():
+		Const.count = 0
