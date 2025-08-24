@@ -1,4 +1,5 @@
 from autodiff.nodes.Node import Node
+import numpy as np
 
 
 class Const(Node):
@@ -13,7 +14,7 @@ class Const(Node):
 		return f"Const name={self.name} value={self.value}"
 	
 	def string(self):
-		return f"{self.value}"
+		return f"np.array({self.value.tolist()})" if type(self.value) == np.ndarray else f"{self.value}"
 	
 	@staticmethod
 	def reset_count():
