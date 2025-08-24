@@ -59,7 +59,11 @@ def log2_grad(a, dout):
 def log_grad(a, dout):
 	return np.multiply(dout, (1 / a))
 
-# def matmul_grad(a, b, dout):
+def matmul_grad_left(a, b, dout):
+	return np.matmul(dout, b.T)
+
+def matmul_grad_right(a, b, dout):
+	return np.matmul(a.T, dout)
 
 def multiply_grad_left(a, b, dout):
 	return np.multiply(dout, b)
@@ -74,7 +78,7 @@ def power_grad_left(a, b, dout):
 	return np.multiply(dout, (b * (a ** (b - 1))))
 
 def power_grad_right(a, b, dout):
-	return np.nan_to_num(np.multiply(dout, (a ** b) * (np.log(a))), nan=0, neginf=0, posinf=0)
+	return np.nan_to_num(np.multiply(dout, (a ** b) * (np.log(np.abs(a)))), nan=0, neginf=0, posinf=0)
 
 def reciprocal_grad(a, dout):
 	return np.multiply(dout, -np.reciprocal(a ** 2))
@@ -99,6 +103,8 @@ def tan_grad(a, dout):
 
 def tanh_grad(a, dout):
 	return np.multiply(dout, 1 - (np.tanh(a) ** 2))
+
+def transpose_grad(a, dout, **kwargs): return dout.T
 
 
 def nan_to_num(x, copy=True, nan=0, posinf=None, neginf=None):
@@ -128,6 +134,7 @@ GRADS = {
 	np.log1p.__name__: [log1p_grad],
 	np.log2.__name__: [log2_grad],
 	np.log.__name__: [log_grad],
+	np.matmul.__name__: [matmul_grad_left, matmul_grad_right],
 	np.multiply.__name__: [multiply_grad_left, multiply_grad_right],
 	np.negative.__name__: [negative_grad],
 	np.power.__name__: [power_grad_left, power_grad_right],
@@ -138,4 +145,5 @@ GRADS = {
 	np.subtract.__name__: [subtract_grad_left, subtract_grad_right],
 	np.tan.__name__: [tan_grad],
 	np.tanh.__name__: [tanh_grad],
+	np.transpose.__name__: [transpose_grad]
 }
