@@ -4,6 +4,10 @@ from autodiff.Tensor import Tensor
 from autodiff.ufunc_gradients import GRADS
 
 
+# TODO: Need to change the way that the gradient functions are stored in the dictionary...
+# currently the program only checks if a variable is present in the keys of the dictionary 
+# which means that another derivative cannot be taken of it without its value being added to the previous derivative
+
 class Graph(object):
 	def __init__(self):
 		self.variables = set()
@@ -11,6 +15,10 @@ class Graph(object):
 		self.__grad_funcs_ops = {}
 		self.grad_funcs = {}
 		self.dy = None
+
+	@property
+	def grad_func_ops(self):
+		return self.__grad_funcs_ops 
 
 	def __generate_grad_funcs(self): 
 		for var, op in zip(self.__grad_funcs_ops.keys(), self.__grad_funcs_ops.values()):
@@ -35,7 +43,8 @@ class Graph(object):
 
 	def __search(self, operation, dout=None):
 		if dout is None:
-			dout = Tensor(1, source=Const(np.ones(shape=self.dy._i.shape, dtype=self.dy.dtype)))
+			val = np.ones(shape=self.dy._i.shape, dtype=self.dy.dtype)
+			dout = Tensor(val, source=Const(val))
 
 		for idx, inp in enumerate(operation.inputs):
 			if not GRADS.get(operation.optype):
@@ -66,7 +75,10 @@ class Graph(object):
 
 			if not self.grad_funcs.get(func_name):
 				self.__search(dy._source)
+				# print(self.__grad_funcs_ops)
 				self.__generate_grad_funcs()
+
+			print(self.grad_funcs)
 
 			func = self.grad_funcs.get(func_name)
 			output.append(func(**self.params))
