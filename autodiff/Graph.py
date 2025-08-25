@@ -4,10 +4,6 @@ from autodiff.Tensor import Tensor
 from autodiff.ufunc_gradients import GRADS
 
 
-# TODO: Need to change the way that the gradient functions are stored in the dictionary...
-# currently the program only checks if a variable is present in the keys of the dictionary 
-# which means that another derivative cannot be taken of it without its value being added to the previous derivative
-
 class Graph(object):
 	def __init__(self):
 		self.variables = set()
@@ -21,14 +17,13 @@ class Graph(object):
 		return self.__grad_funcs_ops 
 
 	def __generate_grad_funcs(self): 
-		for var, op in zip(self.__grad_funcs_ops.keys(), self.__grad_funcs_ops.values()):
+		for var, op in zip(self.__grad_funcs_ops[self.dy._source.name].keys(), self.__grad_funcs_ops[self.dy._source.name].values()):
 			loc = {}
-			func_name = f"d{self.dy._source.name}_d{var}"
-			func = f"def {func_name}({','.join(self.params)}, **kwargs):return {op}"
+			func = f"def {var}({','.join(self.params)}, **kwargs):return {op}"
 
 			exec("import numpy as np")
 			exec(func, None, loc)
-			self.grad_funcs[func_name] = loc[func_name]
+			self.grad_funcs[self.dy._source.name][var] = loc[var]
 
 	def add_variables(self, *args):
 		for v in args:
@@ -36,10 +31,10 @@ class Graph(object):
 			self.params[v._source.name] = v
 
 	def __generate_grad_func_op(self, inp, grad):
-		if inp.name in self.__grad_funcs_ops.keys():
-			self.__grad_funcs_ops[inp.name] = f"np.add({self.__grad_funcs_ops[inp.name]}, {grad._source.string()})" 
+		if inp.name in self.__grad_funcs_ops[self.dy._source.name].keys():
+			self.__grad_funcs_ops[self.dy._source.name][inp.name] = f"np.add({self.__grad_funcs_ops[self.dy._source.name][inp.name]}, {grad._source.string()})" 
 		else:
-			self.__grad_funcs_ops[inp.name] = grad._source.string()
+			self.__grad_funcs_ops[self.dy._source.name][inp.name] = grad._source.string()
 
 	def __search(self, operation, dout=None):
 		if dout is None:
@@ -68,19 +63,18 @@ class Graph(object):
 
 	def gradient(self, dy, dx):
 		self.dy = dy
+		self.__grad_funcs_ops[dy._source.name] = {}
+		self.grad_funcs[dy._source.name] = {}
 		output = []
 
 		for x in dx:
-			func_name = f"d{dy._source.name}_d{x._source.name}"
+			func_name = f"d{x._source.name}"
 
 			if not self.grad_funcs.get(func_name):
 				self.__search(dy._source)
-				# print(self.__grad_funcs_ops)
 				self.__generate_grad_funcs()
 
-			print(self.grad_funcs)
-
-			func = self.grad_funcs.get(func_name)
+			func = self.grad_funcs[dy._source.name][x._source.name]
 			output.append(func(**self.params))
 		
 		self.dy = None
