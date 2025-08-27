@@ -16,6 +16,7 @@ HANDLED_FUNCTIONS = {
 	np.transpose: transpose
 }
 
+
 class Tensor(np.lib.mixins.NDArrayOperatorsMixin):
 	def __init__(self, _i, dtype="float32", *args, **kwargs):
 		self._i = np.array(_i).astype(dtype)
@@ -73,3 +74,6 @@ class Tensor(np.lib.mixins.NDArrayOperatorsMixin):
 	def copy(self):
 		# shallow copy
 		return self.__class__(self._i, dtype=self.dtype)
+	
+	def assign(self, a):
+		self._i = a

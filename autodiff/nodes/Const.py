@@ -15,7 +15,6 @@ class Const(Node):
 	
 	def string(self):
 		return f"np.array({self.value.tolist()})" if type(self.value) == np.ndarray else f"{self.value}"
-	
 	@staticmethod
 	def reset_count():
 		Const.count = 0

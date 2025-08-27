@@ -2,6 +2,7 @@ import numpy as np
 from autodiff.nodes import Var, Const, Operator
 from autodiff.Tensor import Tensor
 from autodiff.ufunc_gradients import GRADS
+import time
 
 
 class Graph(object):
@@ -20,10 +21,13 @@ class Graph(object):
 		for var, op in zip(self.__grad_funcs_ops[self.dy._source.name].keys(), self.__grad_funcs_ops[self.dy._source.name].values()):
 			loc = {}
 			func = f"def {var}({','.join(self.params)}, **kwargs):return {op}"
-
-			exec("import numpy as np")
-			exec(func, None, loc)
-			self.grad_funcs[self.dy._source.name][var] = loc[var]
+			try: 
+				exec("import numpy as np")
+				exec(func, None, loc)
+				self.grad_funcs[self.dy._source.name][var] = loc[var]
+			except SyntaxError:
+				print("Expression too large to differentiate")
+				exit()
 
 	def add_variables(self, *args):
 		for v in args:
@@ -32,9 +36,9 @@ class Graph(object):
 
 	def __generate_grad_func_op(self, inp, grad):
 		if inp.name in self.__grad_funcs_ops[self.dy._source.name].keys():
-			self.__grad_funcs_ops[self.dy._source.name][inp.name] = f"np.add({self.__grad_funcs_ops[self.dy._source.name][inp.name]}, {grad._source.string()})" 
+				self.__grad_funcs_ops[self.dy._source.name][inp.name] = f"{self.__grad_funcs_ops[self.dy._source.name][inp.name]}+{grad._source.string()}" 
 		else:
-			self.__grad_funcs_ops[self.dy._source.name][inp.name] = grad._source.string()
+				self.__grad_funcs_ops[self.dy._source.name][inp.name] = grad._source.string()
 
 	def __search(self, operation, dout=None):
 		if dout is None:
@@ -52,30 +56,38 @@ class Graph(object):
 			grad = GRADS[operation.optype][idx](*tensors, dout)
 
 			if isinstance(inp, Operator):
+				# ! optimise
 				# if the source of dy is an operator...
 				if inp.name in self.params.keys():
 					self.__generate_grad_func_op(inp, grad)
 				self.__search(inp, grad)
 
 			elif isinstance(inp, Var):
+				# ! optimise
 				# if the variable appears more than once in the tree
 				self.__generate_grad_func_op(inp, grad)
 
 	def gradient(self, dy, dx):
 		self.dy = dy
 		self.__grad_funcs_ops[dy._source.name] = {}
-		self.grad_funcs[dy._source.name] = {}
+		self.grad_funcs[dy._source.name] = self.grad_funcs.get(dy._source.name) if self.grad_funcs.get(dy._source.name) else {}
 		output = []
 
 		for x in dx:
-			func_name = f"d{x._source.name}"
+			if not self.grad_funcs[dy._source.name].get(x._source.name):
+				_ = time.time()
+				try:
+					self.__search(dy._source)
+					self.__generate_grad_funcs()
+					print("search time: ", time.time() - _)
+				except RecursionError:
+					print("The maximum search depth has been reached. To increase it, increase the maximum recursion depth.")
+					exit()
 
-			if not self.grad_funcs.get(func_name):
-				self.__search(dy._source)
-				self.__generate_grad_funcs()
-
+			_ = time.time()
 			func = self.grad_funcs[dy._source.name][x._source.name]
 			output.append(func(**self.params))
+			print("execute time: ", time.time() - _)
 		
 		self.dy = None
 		self.reset_counts()
