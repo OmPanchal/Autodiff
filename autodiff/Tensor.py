@@ -62,10 +62,11 @@ class Tensor(np.lib.mixins.NDArrayOperatorsMixin):
 		for inp in inps:
 			val = inp
 			
-			if issubclass(type(inp), Number) or issubclass(type(inp), np.ndarray):
+			if issubclass(type(inp), Number) or issubclass(type(inp), np.ndarray) or isinstance(inp, list):
 				try: val = self.__class__(inp, source=Const(inp))
 				except:
 					raise ValueError(f"Cannot convert {inp} into type {self.__class__.__name__}")
+			
 			scalars.append(val._i)
 			sources.append(val._source)
 
