@@ -19,8 +19,8 @@ class Operator(Node):
 		return f"<{Operator.__name__} name={self.name} type={self.optype}>"
 
 	def string(self):
-		if all(type(x) == Const for x in self.inputs):
-			return f"{self.value}"
+		# if all(type(x) == Const for x in self.inputs):
+		# 	return f"{self.value}"
 		return f"np.{self.optype}({','.join(self.inputs_strs)})"
 	
 	@staticmethod
