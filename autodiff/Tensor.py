@@ -30,6 +30,22 @@ class Tensor(np.lib.mixins.NDArrayOperatorsMixin):
 	def __repr__(self):
 		return f"<Tensor value={self._i} dtype={self.dtype}>"
 	
+	def __getitem__(self, key):
+		return self.__class__(self._i[key], dtype=self.dtype, source=self._source)
+	def __setitem__(self, key, value):
+		self._i[key] = value
+
+	def __iter__(self):
+		self._idx = 0
+		return self
+	
+	def __next__(self):
+		if self._idx < len(self._i):
+			x = self._i[self._idx]
+			self._idx += 1
+			return self.__class__(x, dtype=self.dtype, source=Var(x, name=self._source.name))
+		raise StopIteration
+	
 	def __array__(self, dtype=None, copy=None):
 		if copy is False:
 			raise ValueError(
