@@ -104,15 +104,15 @@ def tan_grad(a, dout):
 def tanh_grad(a, dout):
 	return np.multiply(dout, 1 - (np.tanh(a) ** 2))
 
-def transpose_grad(a, dout, **kwargs): return dout.T
 
+def transpose_grad(a, dout, **kwargs): return dout.T
 
 def nan_to_num(x, copy=True, nan=0, posinf=None, neginf=None):
 	return Tensor(np.nan_to_num(x._i, copy, nan, posinf, neginf), dtype=x.dtype, source=x._source)
 
-HANDLED_FUNCTIONS = {
-	np.nan_to_num: nan_to_num
-}
+def sum_grad(a, dout, **kwargs):
+	return np.ones(shape=a.shape) * dout
+
 
 GRADS = {
 	np.abs.__name__: [absolute_grad],
@@ -141,6 +141,7 @@ GRADS = {
 	np.reciprocal.__name__: [reciprocal_grad],
 	np.sin.__name__: [sin_grad],
 	np.sinh.__name__: [sinh_grad],
+	np.sum.__name__: [sum_grad],
 	np.sqrt.__name__: [sqrt_grad],
 	np.subtract.__name__: [subtract_grad_left, subtract_grad_right],
 	np.tan.__name__: [tan_grad],
