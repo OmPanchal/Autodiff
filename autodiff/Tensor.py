@@ -3,28 +3,64 @@ from numbers import Number
 from autodiff.nodes import Operator, Var, Const
 
 
-def nan_to_num(x, copy=True, nan=0, posinf=None, neginf=None):
-	return Tensor(np.nan_to_num(x._i, copy, nan, posinf, neginf), dtype=x.dtype, source=x._source)
+def nan_to_num(x, **kwargs):
+	return Tensor(np.nan_to_num(x._i, **kwargs), dtype=x.dtype, source=x._source)
 
 def transpose(a, **kwargs):
 	val = np.transpose(a._i, **kwargs)
 	op = Operator([a._source], value=val, name=None, optype=np.transpose.__name__)
 	return Tensor(val, dtype=a.dtype, source=op)
 
+def sum(a, **kwargs):
+	val = np.sum(a._i, **kwargs)
+	op = Operator([a._source], value=val, name=None, optype=np.sum.__name__)
+	return Tensor(val, dtype=a.dtype, source=op)
+
+
 HANDLED_FUNCTIONS = {
 	np.nan_to_num: nan_to_num,
-	np.transpose: transpose
+	np.transpose: transpose,
+	np.sum: sum,
 }
 
 
 class Tensor(np.lib.mixins.NDArrayOperatorsMixin):
-	def __init__(self, _i, dtype="float32", *args, **kwargs):
+	def __init__(self, _i, dtype="float32", constant=False, *args, **kwargs):
+		"""
+		The Tensor object is a custom numpy container which produces a computation
+		tree whenever numpy ufuncs are performed on it.
+
+		Parameters 
+		----------
+		_i: `np.ndarray`, `list`
+			The value of the array.
+		dtype: `str` 
+			The data type of the tensor.
+		constant: `bool`
+			Setting this as true will treat this Tensor as a constant. Its gradient
+			will be zero. By default it is set to *True* which will mean that the
+			tensor will be treated as a variable.
+		"""
 		self._i = np.array(_i).astype(dtype)
-		self.dtype = dtype
-		self._source = kwargs.get("source") or Var(self._i, kwargs.get("name"))
+		self.shape = self._i.shape
+
+		if constant:
+			self._source = kwargs.get("source") or Const(self._i, kwargs.get("name"))
+		else: 
+			self._source = kwargs.get("source") or Var(self._i, kwargs.get("name"))
+
+	@property
+	def dtype(self):
+		"""
+		Returns the data type of the tensor
+		"""
+		return self._i.dtype
 
 	@property
 	def T(self):
+		"""
+		Returns the transposed version of the tensor.
+		"""
 		return np.transpose(self)
 
 	def __repr__(self):
@@ -89,8 +125,53 @@ class Tensor(np.lib.mixins.NDArrayOperatorsMixin):
 		return scalars, sources
 	
 	def copy(self):
-		# shallow copy
+		"""
+		Returns a shallow copy of the array.
+		
+		[NOTE] Any built up computation graphs from the original array will be discarded.
+		"""
 		return self.__class__(self._i, dtype=self.dtype)
 	
 	def assign(self, a):
+		"""
+		Adds and assigns the result to the tensor.
+
+		Parameters
+		----------
+		value: `np.ndarray` 
+			Value to be assigned to the tensor
+		"""
 		self._i = a
+
+	def assign_add(self, value): 
+		"""
+		Adds and assigns the result to the tensor.
+
+		Parameters
+		----------
+		value: `np.ndarray`
+			Value to be added to the current value of the tensor
+		"""
+		return self.assign(self._i + value)
+	
+	def assign_sub(self, value): 
+		"""
+		Subtracts and assigns the result to the tensor.
+
+		Parameters
+		----------
+		value: `np.ndarray`
+			Value to be subtracted from the current value of the tensor
+		"""
+		return self.assign(self._i - value)
+
+	def astype(self, dtype):
+		"""
+		Changes the data type of the tensor.
+
+		Parameters
+		----------
+		dtype: `str` 
+			The data type to switch to
+		"""
+		self._i = self._i.astype(dtype)
