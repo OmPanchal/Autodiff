@@ -1,5 +1,4 @@
 from autodiff.nodes import Node
-from autodiff.nodes import Const
 
 
 class Operator(Node):
@@ -19,8 +18,6 @@ class Operator(Node):
 		return f"<{Operator.__name__} name={self.name} type={self.optype}>"
 
 	def string(self):
-		# if all(type(x) == Const for x in self.inputs):
-		# 	return f"{self.value}"
 		return f"np.{self.optype}({','.join(self.inputs_strs)})"
 	
 	@staticmethod

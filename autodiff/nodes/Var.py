@@ -4,7 +4,7 @@ from autodiff.nodes import Node
 class Var(Node):
 	count = 0
 
-	def __init__(self, value, name=None) -> None:
+	def __init__(self, value, name=None):
 		self.name = name or self.set_name(Var, name) 
 		Var.count += 1
 		super().__init__(value, self.name)
