@@ -1,4 +1,6 @@
-<img src="https://raw.githubusercontent.com/OmPanchal/Autodiff/refs/heads/main/autodiff/Autodiff.png"></img>
+<a href="https://pypi.org/project/python-autodiff/">
+	<img src="https://raw.githubusercontent.com/OmPanchal/Autodiff/refs/heads/main/autodiff/Autodiff.png"></img>
+</a>
 
 [autodiff](https://github.com/OmPanchal/autodiff) is an Automatic Differentiation library created purely using [numpy](https://numpy.org) and python which allows users to evaluate the derivatives of multivariable functions. 
 
