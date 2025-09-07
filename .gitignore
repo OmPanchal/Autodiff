@@ -4,3 +4,8 @@ __pycache__
 test*.py
 
 projects
+
+dist
+python_autodiff.egg-info
+
+.pypirc
