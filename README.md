@@ -7,7 +7,7 @@ This is an improvement to the automatic differentiation system featured in [bren
 # **Install**
 To install the latest version of autodiff, run the following command in your terminal.
 ```
-pip install autodiff
+pip install python-autodiff
 ```
 
 # **How it works**

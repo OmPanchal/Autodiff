@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
       name="python-autodiff",
-      version="0.1.0",
+      version="0.1.1",
       author="Om Panchal",
 	  author_email="om.panchal2022@gmail.com",
 	  maintainer="Om Panchal",
